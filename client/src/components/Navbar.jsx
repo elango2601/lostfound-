@@ -21,7 +21,13 @@ const Navbar = () => {
               
               {/* Logo */}
               <div className="flex items-center">
-                <Link to={user ? "/dashboard" : "/"} className="flex-shrink-0 flex items-center group">
+                <Link to={user ? "/dashboard" : "/"} className="flex-shrink-0 flex items-center gap-2 group">
+                  <motion.img
+                    src="/favicon.jpg"
+                    alt="LostFound+ Logo"
+                    whileHover={{ scale: 1.08, rotate: 5 }}
+                    className="h-9 w-9 rounded-xl object-cover shadow-sm"
+                  />
                   <motion.span 
                     whileHover={{ scale: 1.05 }}
                     className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 transition-all tracking-tight"

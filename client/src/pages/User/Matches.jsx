@@ -7,11 +7,13 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const Matches = () => {
-  const { user } = useContext(AuthContext);
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user?._id) { setLoading(false); return; }
     const fetchMatches = async () => {
       try {
         const lostRes = await api.get(`/lost?reportedBy=${user._id}`);
@@ -42,8 +44,8 @@ const Matches = () => {
         setLoading(false);
       }
     };
-    if (user?._id) fetchMatches();
-  }, [user]);
+    if (!authLoading && user?._id) fetchMatches();
+  }, [user, authLoading]);
 
   return (
     <div className="max-w-7xl mx-auto py-8">

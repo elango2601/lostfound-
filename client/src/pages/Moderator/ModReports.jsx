@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import api from '../../services/api';
 import { Search, Filter, Eye, AlertCircle, ShieldCheck, X, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { SocketContext } from '../../context/SocketContext';
 
 const ModReports = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const socket = useContext(SocketContext);
   
   // Modal State
   const [selectedReport, setSelectedReport] = useState(null);
@@ -16,6 +18,17 @@ const ModReports = () => {
   useEffect(() => {
     fetchReports();
   }, [page]);
+
+  // Real-time: listen for new claims and auto-refresh
+  useEffect(() => {
+    if (!socket) return;
+    const handleNewClaim = (data) => {
+      toast(`📋 New claim received!`, { icon: '🔔' });
+      fetchReports();
+    };
+    socket.on('new_claim', handleNewClaim);
+    return () => socket.off('new_claim', handleNewClaim);
+  }, [socket]);
 
   const fetchReports = async () => {
     setLoading(true);

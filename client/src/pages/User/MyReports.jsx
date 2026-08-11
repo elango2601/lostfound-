@@ -5,7 +5,7 @@ import { Inbox, Activity, Archive, MapPin, Calendar, Eye, Trash2 } from 'lucide-
 import toast from 'react-hot-toast';
 
 const MyReports = () => {
-  const { user } = useContext(AuthContext);
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL'); // ALL, LOST, FOUND
@@ -13,6 +13,8 @@ const MyReports = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user?._id) { setLoading(false); return; }
     const fetchMyReports = async () => {
       setLoading(true);
       try {
@@ -35,8 +37,8 @@ const MyReports = () => {
         setLoading(false);
       }
     };
-    if (user?._id) fetchMyReports();
-  }, [user, page]);
+    if (!authLoading && user?._id) fetchMyReports();
+  }, [user, page, authLoading]);
 
   const handleDelete = async (id, type) => {
     if (!window.confirm('Are you sure you want to delete this report?')) return;

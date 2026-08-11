@@ -62,11 +62,12 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   return (
     <div className="flex flex-col h-full bg-white border-r border-gray-200 w-64 flex-shrink-0">
       {/* Brand Header */}
-      <div className="h-16 flex items-center px-6 border-b border-gray-100 flex-shrink-0">
+      <div className="h-16 flex items-center px-6 border-b border-gray-100 flex-shrink-0 gap-2">
+        <img src="/favicon.jpg" alt="LostFound+" className="h-8 w-8 rounded-lg object-cover shadow-sm" />
         <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight">
           LostFound+
         </span>
-        <span className={`ml-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${user?.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : user?.role === 'moderator' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
+        <span className={`ml-auto text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${user?.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : user?.role === 'moderator' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}`}>
           {user?.role}
         </span>
       </div>

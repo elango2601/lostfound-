@@ -6,11 +6,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const RecoveryHistory = () => {
-  const { user } = useContext(AuthContext);
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [recoveries, setRecoveries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user?._id) { setLoading(false); return; }
     const fetchRecoveries = async () => {
       try {
         const { data } = await api.get('/claims');
@@ -26,8 +28,8 @@ const RecoveryHistory = () => {
         setLoading(false);
       }
     };
-    if (user?._id) fetchRecoveries();
-  }, [user]);
+    if (!authLoading && user?._id) fetchRecoveries();
+  }, [user, authLoading]);
 
   return (
     <div className="max-w-7xl mx-auto py-8">

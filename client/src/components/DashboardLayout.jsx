@@ -51,8 +51,11 @@ const DashboardLayout = () => {
             >
               <Menu size={24} />
             </button>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight">
-              LostFound+
+            <span className="flex items-center gap-2">
+              <img src="/favicon.jpg" alt="LostFound+" className="h-8 w-8 rounded-lg object-cover shadow-sm" />
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight">
+                LostFound+
+              </span>
             </span>
           </div>
           <div className="flex items-center gap-2">

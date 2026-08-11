@@ -33,6 +33,21 @@ export const SocketProvider = ({ children }) => {
         });
       });
 
+      // Listen for claim status updates (user gets notified when moderator acts)
+      newSocket.on('claim_status_updated', (data) => {
+        const isApproved = data.status === 'APPROVED';
+        toast(isApproved ? '✅ Your claim was APPROVED!' : '❌ Your claim was rejected', {
+          duration: 5000,
+          style: {
+            borderRadius: '12px',
+            background: isApproved ? '#f0fdf4' : '#fef2f2',
+            color: isApproved ? '#166534' : '#991b1b',
+            fontWeight: '600',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+          },
+        });
+      });
+
       return () => newSocket.close();
     }
   }, [user]);

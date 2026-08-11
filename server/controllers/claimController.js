@@ -2,6 +2,7 @@ const Claim = require('../models/Claim');
 const FoundItem = require('../models/FoundItem');
 const LostItem = require('../models/LostItem');
 const AuditLog = require('../models/AuditLog');
+const socket = require('../utils/socket');
 
 exports.createClaim = async (req, res) => {
   try {
@@ -37,6 +38,14 @@ exports.createClaim = async (req, res) => {
     });
 
     res.status(201).json({ success: true, data: claim });
+
+    // Broadcast to all connected moderators/admins in real-time
+    try {
+      socket.getIO().emit('new_claim', {
+        message: `New claim submitted for item ID: ${itemId}`,
+        claim
+      });
+    } catch (e) { console.error('Socket emit error:', e.message); }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -135,6 +144,16 @@ exports.updateClaimStatus = async (req, res) => {
     }
 
     res.status(200).json({ success: true, data: claim });
+
+    // Broadcast claim status update to all connected clients
+    try {
+      socket.getIO().emit('claim_status_updated', {
+        message: `Claim ${status === 'APPROVED' ? 'approved ✅' : 'rejected ❌'} by moderator`,
+        claimId: claim._id,
+        status: claim.status,
+        claimantId: claim.claimantId
+      });
+    } catch (e) { console.error('Socket emit error:', e.message); }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

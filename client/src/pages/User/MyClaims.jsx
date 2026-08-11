@@ -5,11 +5,13 @@ import { FileCheck, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const MyClaims = () => {
-  const { user } = useContext(AuthContext);
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user?._id) { setLoading(false); return; }
     const fetchClaims = async () => {
       try {
         const { data } = await api.get('/claims');
@@ -22,8 +24,8 @@ const MyClaims = () => {
         setLoading(false);
       }
     };
-    if (user?._id) fetchClaims();
-  }, [user]);
+    if (!authLoading && user?._id) fetchClaims();
+  }, [user, authLoading]);
 
   return (
     <div className="max-w-7xl mx-auto py-8">

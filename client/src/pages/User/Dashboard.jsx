@@ -19,7 +19,7 @@ const itemVariants = {
 };
 
 const Dashboard = () => {
-  const { user } = useContext(AuthContext);
+  const { user, loading: authLoading } = useContext(AuthContext);
   const [stats, setStats] = useState({
     lost: 0,
     found: 0,
@@ -30,6 +30,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Wait for auth to resolve
+    if (authLoading) return;
+    // Auth done but no user — stop spinner immediately
+    if (!user?._id) { setLoading(false); return; }
+
     const fetchDashboardData = async () => {
       try {
         const [lostRes, foundRes, claimsRes] = await Promise.all([
@@ -77,7 +82,7 @@ const Dashboard = () => {
       }
     };
     fetchDashboardData();
-  }, [user]);
+  }, [user, authLoading]);
 
   if (loading) return (
     <div className="flex justify-center items-center min-h-[60vh]">
