@@ -14,20 +14,35 @@ const ModReports = () => {
   
   // Modal State
   const [selectedReport, setSelectedReport] = useState(null);
+  const [isLive, setIsLive] = useState(false);
 
   useEffect(() => {
     fetchReports();
   }, [page]);
 
-  // Real-time: listen for new claims and auto-refresh
+  // Real-time: listen for new claims and status updates
   useEffect(() => {
     if (!socket) return;
-    const handleNewClaim = (data) => {
-      toast(`📋 New claim received!`, { icon: '🔔' });
+
+    setIsLive(true);
+
+    const handleNewClaim = () => {
+      toast('📋 New claim received!', { icon: '🔔', duration: 4000 });
       fetchReports();
     };
+    const handleStatusUpdated = (data) => {
+      toast(`🔄 Claim ${data.status === 'APPROVED' ? 'approved ✅' : 'rejected ❌'}`, { duration: 3000 });
+      fetchReports();
+    };
+
     socket.on('new_claim', handleNewClaim);
-    return () => socket.off('new_claim', handleNewClaim);
+    socket.on('claim_status_updated', handleStatusUpdated);
+
+    return () => {
+      socket.off('new_claim', handleNewClaim);
+      socket.off('claim_status_updated', handleStatusUpdated);
+      setIsLive(false);
+    };
   }, [socket]);
 
   const fetchReports = async () => {

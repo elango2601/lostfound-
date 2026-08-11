@@ -1,22 +1,53 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import api from '../../services/api';
-import { ShieldCheck, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { ShieldCheck, Eye, CheckCircle, XCircle, Wifi } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { SocketContext } from '../../context/SocketContext';
 
 const ModClaims = () => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
+  const socket = useContext(SocketContext);
 
   useEffect(() => {
     fetchClaims();
   }, []);
 
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    if (!socket) return;
+
+    setIsLive(true);
+
+    const handleNewClaim = () => {
+      toast('📋 New claim submitted!', { icon: '🔔', duration: 4000 });
+      fetchClaims();
+    };
+
+    const handleStatusUpdated = (data) => {
+      // Update the specific claim in state without full refetch
+      setClaims(prev => prev.map(c =>
+        c._id === data.claimId ? { ...c, status: data.status } : c
+      ));
+      toast(`🔄 Claim ${data.status === 'APPROVED' ? 'approved ✅' : 'rejected ❌'} — list updated`, { duration: 3000 });
+    };
+
+    socket.on('new_claim', handleNewClaim);
+    socket.on('claim_status_updated', handleStatusUpdated);
+
+    return () => {
+      socket.off('new_claim', handleNewClaim);
+      socket.off('claim_status_updated', handleStatusUpdated);
+      setIsLive(false);
+    };
+  }, [socket]);
+
   const fetchClaims = async () => {
     try {
       const { data } = await api.get('/claims');
-      // Mods primarily care about pending claims
-      const pendingClaims = (data.data || []).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-      setClaims(pendingClaims);
+      const allClaims = (data.data || []).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setClaims(allClaims);
     } catch (error) {
       toast.error('Failed to load claims');
     } finally {
@@ -25,22 +56,32 @@ const ModClaims = () => {
   };
 
   const handleUpdateClaimStatus = async (id, status) => {
+    // Optimistically update UI immediately
+    setClaims(prev => prev.map(c => c._id === id ? { ...c, status } : c));
     try {
       await api.put(`/claims/${id}/status`, { status });
-      toast.success(`Claim ${status.toLowerCase()}`);
-      fetchClaims();
+      toast.success(`Claim ${status === 'APPROVED' ? '✅ Approved' : '❌ Rejected'}`, { duration: 3000 });
     } catch (error) {
       toast.error('Failed to update claim');
+      fetchClaims(); // revert on error
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3">
-          <ShieldCheck className="text-orange-500" size={32} /> Claim Verification
-        </h1>
-        <p className="mt-2 text-gray-500">Review user-submitted proofs and approve or reject ownership claims.</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-3">
+            <ShieldCheck className="text-orange-500" size={32} /> Claim Verification
+          </h1>
+          <p className="mt-2 text-gray-500">Review user-submitted proofs and approve or reject ownership claims.</p>
+        </div>
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border ${isLive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+          <Wifi size={14} />
+          {isLive ? 'LIVE' : 'Connecting...'}
+          {isLive && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>}
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
