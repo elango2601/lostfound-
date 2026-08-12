@@ -1,20 +1,48 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import api from '../../services/api';
-import { CheckCircle, XCircle, Clock, ShieldCheck, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, ShieldCheck, AlertCircle, Wifi } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { SocketContext } from '../../context/SocketContext';
 
 const Moderator = () => {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
+  const socket = useContext(SocketContext);
 
   useEffect(() => {
     fetchPendingClaims();
   }, []);
 
+  // Real-time WebSocket listeners
+  useEffect(() => {
+    if (!socket) return;
+
+    setIsLive(true);
+
+    const handleNewClaim = () => {
+      toast('📋 New claim submitted in queue!', { icon: '🔔', duration: 4000 });
+      fetchPendingClaims();
+    };
+
+    const handleStatusUpdated = (data) => {
+      // If a claim gets approved/rejected (even by another moderator), remove it from the pending list
+      setClaims(prev => prev.filter(c => c._id !== data.claimId));
+    };
+
+    socket.on('new_claim', handleNewClaim);
+    socket.on('claim_status_updated', handleStatusUpdated);
+
+    return () => {
+      socket.off('new_claim', handleNewClaim);
+      socket.off('claim_status_updated', handleStatusUpdated);
+      setIsLive(false);
+    };
+  }, [socket]);
+
   const fetchPendingClaims = async () => {
     try {
-      // For demo, we just fetch all claims and filter frontend, but ideally we query by status
       const { data } = await api.get('/claims');
       const pending = (data.data || []).filter(c => c.status === 'PENDING');
       setClaims(pending);
@@ -27,11 +55,13 @@ const Moderator = () => {
 
   const handleAction = async (id, action) => {
     try {
+      // Optimistically remove from list first
+      setClaims(prev => prev.filter(c => c._id !== id));
       await api.put(`/claims/${id}/status`, { status: action === 'approve' ? 'APPROVED' : 'REJECTED' });
       toast.success(`Claim ${action}d successfully`);
-      setClaims(claims.filter(c => c._id !== id));
     } catch (error) {
       toast.error(`Failed to ${action} claim`);
+      fetchPendingClaims(); // Revert back on error
     }
   };
 
@@ -43,16 +73,23 @@ const Moderator = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
             <ShieldCheck className="text-orange-500" size={32} /> Moderator Queue
           </h1>
           <p className="mt-2 text-sm text-gray-600">Review and verify ownership claims to ensure secure recovery.</p>
         </div>
-        <div className="bg-orange-50 px-4 py-2 rounded-lg border border-orange-100 flex items-center gap-2">
-          <Clock className="text-orange-500" size={20} />
-          <span className="font-semibold text-orange-700">{claims.length} Pending</span>
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border ${isLive ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+            <Wifi size={14} />
+            {isLive ? 'LIVE' : 'Connecting...'}
+            {isLive && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>}
+          </div>
+          <div className="bg-orange-50 px-4 py-2 rounded-lg border border-orange-100 flex items-center gap-2">
+            <Clock className="text-orange-500" size={20} />
+            <span className="font-semibold text-orange-700">{claims.length} Pending</span>
+          </div>
         </div>
       </div>
 
