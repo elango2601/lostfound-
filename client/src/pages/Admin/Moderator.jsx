@@ -54,6 +54,9 @@ const Moderator = () => {
   };
 
   const handleAction = async (id, action) => {
+    if (!window.confirm(`Are you sure you want to ${action === 'approve' ? 'APPROVE' : 'REJECT'} this claim?`)) {
+      return;
+    }
     try {
       // Optimistically remove from list first
       setClaims(prev => prev.filter(c => c._id !== id));
@@ -126,7 +129,7 @@ const Moderator = () => {
                   
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                     <h4 className="font-semibold text-gray-900 mb-2">Claimant Proof</h4>
-                    <p className="text-sm text-gray-700 italic border-l-2 border-orange-300 pl-3">"{claim.proofDescription}"</p>
+                    <p className="text-sm text-gray-700 italic border-l-2 border-orange-300 pl-3">"{claim.description}"</p>
                   </div>
                 </div>
 

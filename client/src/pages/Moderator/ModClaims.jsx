@@ -56,6 +56,9 @@ const ModClaims = () => {
   };
 
   const handleUpdateClaimStatus = async (id, status) => {
+    if (!window.confirm(`Are you sure you want to mark this claim as ${status}?`)) {
+      return;
+    }
     // Optimistically update UI immediately
     setClaims(prev => prev.map(c => c._id === id ? { ...c, status } : c));
     try {
@@ -106,7 +109,7 @@ const ModClaims = () => {
                   <tr key={claim._id} className="hover:bg-gray-50/50">
                     <td className="px-6 py-4 font-mono text-xs">{claim._id.substring(0,8)}</td>
                     <td className="px-6 py-4 font-semibold">{claim.itemType}</td>
-                    <td className="px-6 py-4 truncate max-w-[250px]">{claim.proofDescription}</td>
+                    <td className="px-6 py-4 truncate max-w-[250px]">{claim.description}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex px-2 py-1 rounded-md text-xs font-bold uppercase border ${
                         claim.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
